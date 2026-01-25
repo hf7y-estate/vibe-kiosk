@@ -39,6 +39,10 @@ Responsibilities:
 - Detect filled vs unfilled bubbles
 - Output **raw mark data** with confidence metrics
 
+Fiducials may be simple square marks. The OMR layer also supports an optional
+top-left L-marker (three adjacent squares forming an L) to disambiguate page
+orientation during early form drafts.
+
 This layer does **not** interpret meaning.  
 It answers questions like:
 - Where is each bubble?
@@ -68,6 +72,9 @@ Enforce rules (one bubble per row, required answers, etc.)
 Encode IDs from marked regions
 
 Validate and flag errors or ambiguities
+
+The scoring helpers read bubble metadata (e.g. `question`, `value`, or
+`dimension`) to compute Likert responses and a 4D vector.
 
 This layer is form-specific and policy-driven.
 
