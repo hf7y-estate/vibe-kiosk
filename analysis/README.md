@@ -73,6 +73,9 @@ Encode IDs from marked regions
 
 Validate and flag errors or ambiguities
 
+The scoring helpers read bubble metadata (e.g. `question`, `value`, or
+`dimension`) to compute Likert responses and a 4D vector.
+
 This layer is form-specific and policy-driven.
 
 It answers questions like:
