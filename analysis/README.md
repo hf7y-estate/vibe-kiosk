@@ -39,6 +39,10 @@ Responsibilities:
 - Detect filled vs unfilled bubbles
 - Output **raw mark data** with confidence metrics
 
+Fiducials may be simple square marks. The OMR layer also supports an optional
+top-left L-marker (three adjacent squares forming an L) to disambiguate page
+orientation during early form drafts.
+
 This layer does **not** interpret meaning.  
 It answers questions like:
 - Where is each bubble?
