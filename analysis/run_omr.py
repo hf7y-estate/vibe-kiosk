@@ -6,10 +6,10 @@ from pathlib import Path
 
 import cv2
 
-from analysis.omr.bubbles import detect_bubbles, draw_bubbles, load_bubbles
-from analysis.omr.fiducials import detect_fiducials, draw_fiducials, load_fiducial_targets
-from analysis.omr.preprocess import preprocess
-from analysis.omr.warp import warp_image
+from omr.bubbles import detect_bubbles, draw_bubbles, load_bubbles
+from omr.fiducials import detect_fiducials, draw_fiducials, load_fiducial_targets
+from omr.preprocess import preprocess
+from omr.warp import warp_image
 
 
 def _write_debug(path: Path, image) -> None:
