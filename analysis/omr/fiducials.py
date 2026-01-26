@@ -45,7 +45,7 @@ def _find_square_candidates(binary: np.ndarray) -> list[FiducialCandidate]:
 
     for contour in contours:
         area = cv2.contourArea(contour)
-        if area < img_area * 0.0002 or area > img_area * 0.05:
+        if area < img_area * 0.00008 or area > img_area * 0.05:
             continue
 
         perimeter = cv2.arcLength(contour, True)
@@ -97,6 +97,80 @@ def _find_l_corner(candidates: Iterable[FiducialCandidate]) -> FiducialCandidate
 
     return None
 
+def _find_notched_square_top_left(binary: np.ndarray) -> tuple[float, float] | None:
+    """
+    Detect a top-left notched-square fiducial:
+      - looks like a square with the SE quadrant removed
+      - returns anchor at center of NW quadrant of the bounding box
+    """
+    inv = cv2.bitwise_not(binary)
+    contours, _ = cv2.findContours(inv, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    h, w = binary.shape[:2]
+
+    # only search near top-left to avoid false positives
+    roi_w = int(w * 0.35)
+    roi_h = int(h * 0.35)
+
+    best = None
+    best_score = -1.0
+
+    img_area = float(h * w)
+
+    for cnt in contours:
+        x, y, cw, ch = cv2.boundingRect(cnt)
+
+        if x > roi_w or y > roi_h:
+            continue
+
+        rect_area = float(cw * ch)
+        if rect_area <= 0:
+            continue
+
+        area = float(cv2.contourArea(cnt))
+        if area < img_area * 0.00005:
+            continue
+
+        # bbox should be square-ish
+        aspect = cw / float(ch) if ch else 0.0
+        if not (0.75 <= aspect <= 1.25):
+            continue
+
+        fill = area / rect_area
+        # notched square ≈ 0.75 fill (tolerant)
+        if not (0.55 <= fill <= 0.85):
+            continue
+
+        hull = cv2.convexHull(cnt)
+        hull_area = float(cv2.contourArea(hull))
+        if hull_area <= 0:
+            continue
+
+        concavity = (hull_area - area) / rect_area
+        # missing quadrant should create meaningful concavity
+        if concavity < 0.05:
+            continue
+
+        # prefer larger + closer to origin
+        cx = x + cw / 2.0
+        cy = y + ch / 2.0
+        dist = (cx * cx + cy * cy) ** 0.5
+        score = area / (dist + 1.0)
+
+        if score > best_score:
+            best_score = score
+            best = (x, y, cw, ch)
+
+    if best is None:
+        return None
+
+    x, y, cw, ch = best
+
+    # Anchor = center of the NW quadrant of the *full* square bbox
+    # i.e. quarter-width/height from top-left of bbox
+    return (x + cw * 0.25, y + ch * 0.25)
+
+
 
 def _pick_by_corner(candidates: list[FiducialCandidate], corner: tuple[int, int]) -> FiducialCandidate | None:
     if not candidates:
@@ -122,10 +196,9 @@ def detect_fiducials(binary: np.ndarray, allow_l_marker: bool = True) -> dict[st
     remaining = candidates[:]
 
     if allow_l_marker:
-        l_corner = _find_l_corner(remaining)
-        if l_corner:
-            detected["top_left"] = l_corner.center
-            remaining = [c for c in remaining if c is not l_corner]
+        tl = _find_notched_square_top_left(binary)
+        if tl is not None:
+            detected["top_left"] = tl
 
     for name, corner in corners.items():
         if name in detected:
@@ -139,6 +212,14 @@ def detect_fiducials(binary: np.ndarray, allow_l_marker: bool = True) -> dict[st
         raise ValueError(f"Expected 4 fiducials, detected {len(detected)}: {list(detected.keys())}")
 
     return detected
+
+def draw_candidates(image: np.ndarray, candidates: list[FiducialCandidate]) -> np.ndarray:
+    overlay = image.copy()
+    for c in candidates:
+        x, y, w, h = c.bbox
+        cv2.rectangle(overlay, (x, y), (x + w, y + h), (0, 0, 255), 2)
+        cv2.circle(overlay, (int(c.center[0]), int(c.center[1])), 5, (0, 255, 0), 2)
+    return overlay
 
 
 def draw_fiducials(image: np.ndarray, fiducials: dict[str, tuple[float, float]]) -> np.ndarray:
