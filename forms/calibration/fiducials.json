@@ -1,0 +1,12 @@
+{
+  "page_size": { "width": 2550, "height": 3300 },
+  "fiducial_size": 47,
+  "fiducials": {
+    "top_left": [173, 173],
+    "top_right": [2377, 173],
+    "bottom_left": [173, 3127],
+    "bottom_right": [2377, 3127]
+  },
+  "l_marker": {"enabled": true }
+}
+
