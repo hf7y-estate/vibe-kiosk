@@ -3,6 +3,10 @@
 This directory contains the image analysis and interpretation logic for the
 vibe-kiosk pipeline.
 
+> **`omr/` is frozen.** OMR is being reconciled into `hf7y-estate/crt`
+> (`bin/crt_omr.py`, tracked in hf7y-estate/crt#471). Nothing new lands in
+> `omr/` here — see hf7y-estate/vibe-kiosk#7.
+
 Input to this layer is a **single scanned image** (PNG/TIFF) produced by the
 scanner layer. Output is **structured data** (marks, values, IDs, confidence).
 
